@@ -13,7 +13,8 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "MONGODB_URI": "mongodb+srv://lucasaniceto13_db_user:WahWARpCkVzcnXsi@if.p1bzj9k.mongodb.net/fiapi?retryWrites=true&w=majority&appName=If"
   },
   "functions": {
     "src/server.js": {
