@@ -1,27 +1,54 @@
 const Account = require('../models/Account');
 const Customer = require('../models/Customer');
+const { generateAccountId } = require('../utils/idGenerator');
 
 const createAccount = async (req, res) => {
   try {
-    const { _id, type, branch, number, customerId } = req.body;
+    const { type, branch, number, customerId } = req.body;
+    
+    // Validações básicas
+    if (!customerId) {
+      return res.status(400).json({ error: 'ID do cliente é obrigatório' });
+    }
+    
+    if (!type) {
+      return res.status(400).json({ error: 'Tipo da conta é obrigatório' });
+    }
+    
+    if (!branch) {
+      return res.status(400).json({ error: 'Agência é obrigatória' });
+    }
+    
+    if (!number) {
+      return res.status(400).json({ error: 'Número da conta é obrigatório' });
+    }
     
     const customer = await Customer.findById(customerId);
     if (!customer) {
       return res.status(404).json({ error: 'Cliente não encontrado' });
     }
     
+    // Verificar se já existe conta com mesmo número e agência
+    const existingAccount = await Account.findOne({ branch, number });
+    if (existingAccount) {
+      return res.status(400).json({ error: 'Já existe uma conta com este número e agência' });
+    }
+    
+    const accountId = await generateAccountId();
+    
     const account = new Account({
-      _id,
+      _id: accountId,
       type,
       branch,
       number,
       balance: 0,
-      transactions: []
+      transactions: [],
+      customerId: customerId
     });
     
     await account.save();
     
-    customer.accounts.push(_id);
+    customer.accounts.push(accountId);
     await customer.save();
     
     res.status(201).json(account);

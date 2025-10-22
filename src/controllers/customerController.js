@@ -1,13 +1,16 @@
 const Customer = require('../models/Customer');
+const { generateCustomerId } = require('../utils/idGenerator');
 
 const createCustomer = async (req, res) => {
   try {
-    const { _id, name, cpf, email } = req.body;
+    const { name, cpf, email } = req.body;
+    
+    const customerId = await generateCustomerId();
     
     const customer = new Customer({
-      _id,
+      _id: customerId,
       name,
-      cpf,
+      cpf: cpf.replace(/\D/g, ''),
       email,
       accounts: []
     });
@@ -16,8 +19,17 @@ const createCustomer = async (req, res) => {
     res.status(201).json(customer);
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(400).json({ error: 'CPF ou email já cadastrado' });
+      const duplicateField = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({ 
+        error: `${duplicateField === 'cpf' ? 'CPF' : 'Email'} já cadastrado` 
+      });
     }
+    
+    if (error.name === 'ValidationError') {
+      const errorMessages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ error: errorMessages[0] });
+    }
+    
     res.status(400).json({ error: error.message });
   }
 };

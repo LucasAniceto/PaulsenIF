@@ -13,22 +13,42 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
-app.use('/api/customers', customerRoutes);
-app.use('/api/accounts', accountRoutes);
-app.use('/api/transactions', transactionRoutes);
+// Middleware para tratar JSON malformado
+app.use((error, req, res, next) => {
+  if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
+    return res.status(400).json({ error: 'JSON malformado' });
+  }
+  next();
+});
+
+app.use('/customers', customerRoutes);
+app.use('/accounts', accountRoutes);
+app.use('/transactions', transactionRoutes);
 
 app.get('/', (req, res) => {
   res.json({ 
     message: 'API da Instituição Financeira',
     version: '1.0.0',
+    status: 'ativo',
     endpoints: {
-      customers: 'POST /api/customers',
-      accounts: 'POST /api/accounts, GET /api/accounts/:id/balance',
-      transactions: 'POST /api/transactions, GET /api/transactions/account/:accountId'
+      customers: 'POST /customers',
+      accounts: 'POST /accounts, GET /accounts/:id/balance',
+      transactions: 'POST /transactions, GET /transactions/:accountId'
     }
   });
+});
+
+// Middleware de tratamento de erros global
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Erro interno do servidor' });
+});
+
+// Middleware para rotas não encontradas
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint não encontrado' });
 });
 
 app.listen(PORT, () => {

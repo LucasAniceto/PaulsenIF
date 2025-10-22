@@ -23,6 +23,11 @@ const accountSchema = new mongoose.Schema({
     required: true,
     default: 0
   },
+  customerId: {
+    type: String,
+    ref: 'Customer',
+    required: true
+  },
   transactions: [{
     type: String,
     ref: 'Transaction'
@@ -30,5 +35,9 @@ const accountSchema = new mongoose.Schema({
 }, {
   _id: false
 });
+
+// Índices
+accountSchema.index({ branch: 1, number: 1 }, { unique: true });
+accountSchema.index({ customerId: 1 });
 
 module.exports = mongoose.model('Account', accountSchema);

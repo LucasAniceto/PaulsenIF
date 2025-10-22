@@ -6,14 +6,9 @@ const transactionSchema = new mongoose.Schema({
     required: true
   },
   date: {
-    type: String,
+    type: Date,
     required: true,
-    validate: {
-      validator: function(v) {
-        return /^\d{4}-\d{2}-\d{2}$/.test(v);
-      },
-      message: 'Data deve estar no formato YYYY-MM-DD'
-    }
+    default: Date.now
   },
   description: {
     type: String,
@@ -21,7 +16,8 @@ const transactionSchema = new mongoose.Schema({
   },
   amount: {
     type: Number,
-    required: true
+    required: true,
+    min: [0.01, 'Valor deve ser maior que zero']
   },
   type: {
     type: String,
@@ -30,6 +26,11 @@ const transactionSchema = new mongoose.Schema({
   },
   category: {
     type: String,
+    required: true
+  },
+  accountId: {
+    type: String,
+    ref: 'Account',
     required: true
   }
 }, {
