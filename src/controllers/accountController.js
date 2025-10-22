@@ -61,7 +61,7 @@ const getBalance = async (req, res) => {
   try {
     const { accountId } = req.params;
     
-    const account = await Account.findById(accountId);
+    const account = await Account.findOne({ _id: accountId });
     if (!account) {
       return res.status(404).json({ error: 'Conta não encontrada' });
     }
