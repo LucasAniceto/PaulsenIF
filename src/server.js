@@ -51,6 +51,12 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint não encontrado' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+// Para desenvolvimento local
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+  });
+}
+
+// Exportar para Vercel
+module.exports = app;
