@@ -6,6 +6,7 @@ const connectDB = require('./config/database');
 const customerRoutes = require('./routes/customerRoutes');
 const accountRoutes = require('./routes/accountRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const openfinanceRoutes = require('./routes/openfinanceRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +27,7 @@ app.use((error, req, res, next) => {
 app.use('/customers', customerRoutes);
 app.use('/accounts', accountRoutes);
 app.use('/transactions', transactionRoutes);
+app.use('/openfinance', openfinanceRoutes);
 
 app.get('/', (req, res) => {
   res.json({ 
