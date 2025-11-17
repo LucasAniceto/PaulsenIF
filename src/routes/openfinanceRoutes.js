@@ -1,22 +1,72 @@
 const express = require('express');
+
+// Controllers
+const { createCustomer } = require('../controllers/customerController');
+const { createAccount } = require('../controllers/accountController');
+const { createTransaction } = require('../controllers/transactionController');
 const { createConsent, getConsent, revokeConsent } = require('../controllers/consentController');
+
+// Middlewares
 const { validateConsentMiddleware } = require('../middlewares/consentMiddleware');
+
+// Models
 const Account = require('../models/Account');
 const Customer = require('../models/Customer');
 const Transaction = require('../models/Transaction');
 
 const router = express.Router();
 
+// ====== STATUS ======
+
+// GET /openfinance/ - Status e informações da API
+router.get('/', (req, res) => {
+  res.json({
+    message: 'API da Instituição Financeira',
+    version: '2.0.0',
+    status: 'online',
+    endpoints: {
+      open: [
+        'GET /openfinance/',
+        'POST /openfinance/customers',
+        'POST /openfinance/accounts',
+        'POST /openfinance/transactions'
+      ],
+      consent: [
+        'POST /openfinance/consents',
+        'GET /openfinance/consents/:consentId',
+        'DELETE /openfinance/consents/:consentId'
+      ],
+      protected: [
+        'GET /openfinance/customers/:customerId',
+        'GET /openfinance/customers/:customerId/accounts',
+        'GET /openfinance/accounts/:accountId/balance',
+        'GET /openfinance/transactions/:accountId'
+      ]
+    }
+  });
+});
+
+// ====== OPERAÇÕES PÚBLICAS (CRIAÇÃO) ======
+
+// POST /openfinance/customers - Criar cliente
+router.post('/customers', createCustomer);
+
+// POST /openfinance/accounts - Criar conta
+router.post('/accounts', createAccount);
+
+// POST /openfinance/transactions - Criar transação
+router.post('/transactions', createTransaction);
+
 // ====== CONSENTIMENTO ======
 
 // POST /openfinance/consents - Criar consentimento (público)
 router.post('/consents', createConsent);
 
-// GET /openfinance/consents/:id - Consultar consentimento (público)
-router.get('/consents/:id', getConsent);
+// GET /openfinance/consents/:consentId - Consultar consentimento (público)
+router.get('/consents/:consentId', getConsent);
 
-// DELETE /openfinance/consents/:id - Revogar consentimento (público)
-router.delete('/consents/:id', revokeConsent);
+// DELETE /openfinance/consents/:consentId - Revogar consentimento (público)
+router.delete('/consents/:consentId', revokeConsent);
 
 // ====== BUSCA POR CPF (INTEGRAÇÃO) ======
 
@@ -103,7 +153,7 @@ router.get(
 // GET /openfinance/accounts/:accountId/balance - Obter saldo da conta (requer BALANCES_READ)
 router.get(
   '/accounts/:accountId/balance',
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const { accountId } = req.params;
 
@@ -112,15 +162,22 @@ router.get(
         return res.status(404).json({ error: 'Conta não encontrada' });
       }
 
-      // Validar consentimento com customerId da conta
-      const consentMiddleware = validateConsentMiddleware(['BALANCES_READ']);
+      // Adicionar customerId à rota para o middleware validar
       req.params.customerId = account.customerId;
+      next();
+    } catch (error) {
+      res.status(500).json({ error: 'Erro ao obter saldo' });
+    }
+  },
+  validateConsentMiddleware(['BALANCES_READ']),
+  async (req, res) => {
+    try {
+      const { accountId } = req.params;
+      const account = await Account.findById(accountId);
 
-      consentMiddleware(req, res, () => {
-        res.status(200).json({
-          accountId: account._id,
-          balance: account.balance
-        });
+      res.status(200).json({
+        accountId: account._id,
+        balance: account.balance
       });
     } catch (error) {
       res.status(500).json({ error: 'Erro ao obter saldo' });
@@ -131,7 +188,7 @@ router.get(
 // GET /openfinance/transactions/:accountId - Listar transações da conta (requer TRANSACTIONS_READ)
 router.get(
   '/transactions/:accountId',
-  async (req, res) => {
+  async (req, res, next) => {
     try {
       const { accountId } = req.params;
 
@@ -140,24 +197,30 @@ router.get(
         return res.status(404).json({ error: 'Conta não encontrada' });
       }
 
-      // Validar consentimento com customerId da conta
-      const consentMiddleware = validateConsentMiddleware(['TRANSACTIONS_READ']);
+      // Adicionar customerId à rota para o middleware validar
       req.params.customerId = account.customerId;
+      next();
+    } catch (error) {
+      res.status(500).json({ error: 'Erro ao listar transações' });
+    }
+  },
+  validateConsentMiddleware(['TRANSACTIONS_READ']),
+  async (req, res) => {
+    try {
+      const { accountId } = req.params;
 
-      consentMiddleware(req, res, async () => {
-        const transactions = await Transaction.find({ accountId });
+      const transactions = await Transaction.find({ accountId });
 
-        res.status(200).json({
-          accountId,
-          transactions: transactions.map(txn => ({
-            _id: txn._id,
-            date: txn.date,
-            description: txn.description,
-            amount: txn.amount,
-            type: txn.type,
-            category: txn.category
-          }))
-        });
+      res.status(200).json({
+        accountId,
+        transactions: transactions.map(txn => ({
+          _id: txn._id,
+          date: txn.date,
+          description: txn.description,
+          amount: txn.amount,
+          type: txn.type,
+          category: txn.category
+        }))
       });
     } catch (error) {
       res.status(500).json({ error: 'Erro ao listar transações' });
