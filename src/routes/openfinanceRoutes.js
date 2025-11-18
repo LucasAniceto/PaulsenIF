@@ -134,16 +134,15 @@ router.get(
 
       const accounts = await Account.find({ customerId });
 
-      res.status(200).json({
-        customerId,
-        accounts: accounts.map(acc => ({
+      res.status(200).json(
+        accounts.map(acc => ({
           _id: acc._id,
           type: acc.type,
           branch: acc.branch,
           number: acc.number,
           balance: acc.balance
         }))
-      });
+      );
     } catch (error) {
       res.status(500).json({ error: 'Erro ao listar contas' });
     }
