@@ -22,12 +22,12 @@ const customerSchema = new mongoose.Schema({
     type: String,
     required: [true, 'CPF é obrigatório'],
     unique: true,
-    validate: {
-      validator: function(v) {
-        return validateCPF(v);
-      },
-      message: 'CPF inválido'
-    }
+    // validate: {
+    //   validator: function(v) {
+    //     return validateCPF(v);
+    //   },
+    //   message: 'CPF inválido'
+    // }
   },
   email: {
     type: String,
