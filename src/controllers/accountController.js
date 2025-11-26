@@ -4,7 +4,7 @@ const { generateAccountId } = require('../utils/idGenerator');
 
 const createAccount = async (req, res) => {
   try {
-    const { type, branch, number, customerId } = req.body;
+    const { type, branch, number, customerId, balance } = req.body;
     
     // Validações básicas
     if (!customerId) {
@@ -41,7 +41,7 @@ const createAccount = async (req, res) => {
       type,
       branch,
       number,
-      balance: 0,
+      balance: balance || 0,
       transactions: [],
       customerId: customerId
     });
