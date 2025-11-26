@@ -210,17 +210,16 @@ router.get(
 
       const transactions = await Transaction.find({ accountId });
 
-      res.status(200).json({
-        accountId,
-        transactions: transactions.map(txn => ({
+      res.status(200).json(
+          transactions.map(txn => ({
           _id: txn._id,
           date: txn.date,
           description: txn.description,
           amount: txn.amount,
           type: txn.type,
           category: txn.category
-        }))
-      });
+  }))
+      );
     } catch (error) {
       res.status(500).json({ error: 'Erro ao listar transações' });
     }
